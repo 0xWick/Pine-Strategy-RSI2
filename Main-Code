@@ -2,9 +2,15 @@
 // © wickprof
 //@version=4
 
+// sp = Stoploss (point where we cut our losses and close the trade)
+// tp = Takeprofit (where we take our profits and close the trade)
+// long = Buying and hoping it goes up
+// short = buying and hoping it goes down
+
 strategy("RSI2", overlay=true)
 
 // BACKTESTING RANGE (No Concern Here!)
+// Calculating our Date range for backtest
 // From Date Inputs
 fromDay = input(defval = 1, title = "From Day", minval = 1, maxval = 31)
 fromMonth = input(defval = 1, title = "From Month", minval = 1, maxval = 12)
@@ -17,6 +23,7 @@ toYear = input(defval = 2019, title = "To Year", minval = 1970)
 startDate = timestamp(fromYear, fromMonth, fromDay, 00, 00)
 finishDate = timestamp(toYear, toMonth, toDay, 00, 00)
 time_cond = time >= startDate and time <= finishDate
+
 /// No Concern Above!
 
 // Computing Indicators
@@ -45,7 +52,11 @@ long_sl = pos_size * (1 - sl)
 short_tp = pos_size * (1 - tp)
 short_sl = pos_size * (1 + sl)
 
-// Strategy Backtest
+// Strategy Backtest starts here!
+
+// Disputed territory starts here!!!, problem with bool declaration. We should be able to change the bool value inside the if,
+//but I think the invisible loop that runs after every candle resets it to the values we assigned when we declared the bools.
+
 var bool Ltrade_on = false
 var bool Strade_on = false
 
@@ -71,10 +82,15 @@ if pos_size < 0
     strategy.exit("Stoploss Short", "Short", loss = short_sl)
     strategy.exit("TakeProfit Long", "Short", profit = short_tp)
 
+
+// Plot is a function of pinescript to check the value of a variable (kinda like print or cout but only for int & float)
+plot(pos_size)
 // plot(long_tp)
 // plot(long_sl)
 // plot(short_tp)
 // plot(short_sl)
+
+//Disputed territory ends here!!!
 
 
 /// No Concern here!
