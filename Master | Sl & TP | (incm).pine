@@ -1,0 +1,104 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © wickprof
+//@version=4
+
+// sp = Stoploss (point where we cut our losses and close the trade)
+// tp = Takeprofit (where we take our profits and close the trade)
+// long = Buying and hoping it goes up
+// short = buying and hoping it goes down
+
+strategy("RSI2 Master", overlay=true)
+
+// BACKTESTING RANGE (No Concern Here!)
+// Calculating our Date range for backtest
+// From Date Inputs
+fromDay = input(defval = 1, title = "From Day", minval = 1, maxval = 31)
+fromMonth = input(defval = 1, title = "From Month", minval = 1, maxval = 12)
+fromYear = input(defval = 2018, title = "From Year", minval = 1970)
+// To Date Inputs
+toDay = input(defval = 1, title = "To Day", minval = 1, maxval = 31)
+toMonth = input(defval = 1, title = "To Month", minval = 1, maxval = 12)
+toYear = input(defval = 2019, title = "To Year", minval = 1970)
+// Calculate start/end date and time condition
+startDate = timestamp(fromYear, fromMonth, fromDay, 00, 00)
+finishDate = timestamp(toYear, toMonth, toDay, 00, 00)
+time_cond = time >= startDate and time <= finishDate
+
+/// No Concern Above!
+
+// Computing Indicators
+rsi2 = rsi(close, 2)
+
+// Trading Logic
+EntryLong = rsi2 > 90
+ExitLong = rsi2 < 10
+
+EntryShort = rsi2 < 10
+ExitShort = rsi2 > 90
+
+// TP & SL Calculation
+// Calculating the price at which we entered current position for calculating Stop and Take relative to current position
+pos_size = strategy.position_avg_price
+
+// Taking tp & sl as input
+tp = input(3, "TakeProfit", minval=0, maxval=99)
+sl = input(0.5, "StopLoss", minval=0, maxval=99)
+
+// Calculating Long TP & SL
+long_tp = pos_size * tp
+long_sl = pos_size * sl
+
+short_tp = pos_size * tp * -1
+short_sl = pos_size * sl * -1
+
+// Calculating Short TP & SL
+//short_tp = pos_size * (1 - tp)
+//short_sl = pos_size * (1 + sl)
+
+// Strategy Backtest starts here!
+
+// Disputed territory starts here!!!
+Ltrade_on = false
+Strade_on = false
+
+// Long Position
+if (EntryLong and Ltrade_on == false and Strade_on == false)
+    strategy.entry("Long", strategy.long)
+    Ltrade_on := true
+    Strade_on := false
+else // Short Position
+    if (EntryShort and Strade_on == false and Ltrade_on == false)
+        strategy.entry("Short", strategy.short)
+        Strade_on := true
+        Ltrade_on := false
+
+// // Stoploss & Tp for Short
+if pos_size < 0 // means we are short
+    Strade_on := true
+    Ltrade_on := false
+    strategy.exit("Stoploss Short", "Short", loss = short_sl, profit = short_tp)
+
+// Stoploss & Tp for Long
+if pos_size > 0 // means we are long
+    Ltrade_on := true
+    Strade_on := false
+    strategy.exit("TP or SL Long", "Long", loss = long_sl, profit = long_tp)
+
+
+
+// Plot is a function of pinescript to check the
+// value of a variable (kinda like print or cout but only for int & float)
+// plot(pos_size)
+// plot(long_tp)
+// plot(long_sl)
+// plot(short_tp)
+// plot(short_sl)
+
+
+//Disputed territory ends here!!!
+
+
+/// No Concern here!
+if (not time_cond)
+    strategy.close_all()
+    strategy.cancel_all()
